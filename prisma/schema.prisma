@@ -1,0 +1,44 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  type          String    // LIMIT, MARKET, SNIPER
+  tokenIn       String
+  tokenOut      String
+  amountIn      Float
+  limitPrice    Float?
+  slippage      Float     @default(0.02)
+  status        String    // pending, routing, limit_check, building, submitted, confirmed, failed
+  dex           String?   // RAYDIUM, METEORA
+  executedPrice Float?
+  txHash        String?   @unique
+  errorReason   String?
+  attempts      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderHistory {
+  id            String   @id @default(cuid())
+  orderId       String
+  previousStatus String
+  newStatus     String
+  dex           String?
+  price         Float?
+  timestamp     DateTime @default(now())
+
+  @@index([orderId])
+  @@index([timestamp])
+}

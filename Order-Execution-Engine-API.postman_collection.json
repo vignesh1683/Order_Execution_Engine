@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "Order Execution Engine API",
+    "description": "Complete API collection for the Order Execution Engine with DEX routing (Raydium vs Meteora). Includes limit order execution, WebSocket updates, and system statistics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "order-execution-engine-v1",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API server is running and healthy."
+          },
+          "response": []
+        },
+        {
+          "name": "System Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "stats"]
+            },
+            "description": "Get comprehensive system statistics including order counts by status and queue metrics."
+          },
+          "response": []
+        }
+      ],
+      "description": "Health checks and system status endpoints"
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Submit Limit Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"LIMIT\",\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 10,\n  \"limitPrice\": 190,\n  \"slippage\": 0.02\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "execute"]
+            },
+            "description": "Submit a limit order for execution. The order will be queued and processed with DEX routing. Returns an orderId for tracking via WebSocket."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Market Order (Future)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"MARKET\",\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 5,\n  \"slippage\": 0.02\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "execute"]
+            },
+            "description": "Submit a market order for immediate execution (Future implementation)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Number of orders to return (default: 50)"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Pagination offset (default: 0)"
+                }
+              ]
+            },
+            "description": "Retrieve all orders with pagination. Returns order history with full details."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/:orderId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", ":orderId"],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "clxxxxxx",
+                  "description": "Unique order identifier"
+                }
+              ]
+            },
+            "description": "Get detailed information about a specific order by its ID."
+          },
+          "response": []
+        }
+      ],
+      "description": "Order submission and retrieval endpoints"
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "Submit 5 Concurrent Orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"LIMIT\",\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 10,\n  \"limitPrice\": 190,\n  \"slippage\": 0.02\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "execute"]
+            },
+            "description": "Use Postman Runner to execute this request 5 times simultaneously to test concurrent order processing."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Order submitted successfully\", function () {",
+                  "    pm.response.to.have.status(202);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.orderId).to.exist;",
+                  "    console.log(\"Order ID: \" + jsonData.orderId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order with Low Limit Price (Will Retry)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"LIMIT\",\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 10,\n  \"limitPrice\": 150,\n  \"slippage\": 0.02\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "execute"]
+            },
+            "description": "Submit an order with a very low limit price to test retry logic. The system will retry up to 3 times before marking as failed."
+          },
+          "response": []
+        },
+        {
+          "name": "Order with High Limit Price (Immediate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"LIMIT\",\n  \"tokenIn\": \"SOL\",\n  \"tokenOut\": \"USDC\",\n  \"amountIn\": 10,\n  \"limitPrice\": 250,\n  \"slippage\": 0.02\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/execute",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "execute"]
+            },
+            "description": "Submit an order with a high limit price to ensure immediate execution."
+          },
+          "response": []
+        }
+      ],
+      "description": "Test scenarios for demonstrating system behavior"
+    },
+    {
+      "name": "WebSocket",
+      "item": [
+        {
+          "name": "WebSocket Connection Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/ws",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "ws"]
+            },
+            "description": "WebSocket endpoint for real-time order updates.\n\n**Connection:**\nws://localhost:3000/api/orders/ws\n\n**Subscribe to Order:**\n```json\n{\n  \"action\": \"subscribe\",\n  \"orderId\": \"your-order-id\"\n}\n```\n\n**Unsubscribe:**\n```json\n{\n  \"action\": \"unsubscribe\",\n  \"orderId\": \"your-order-id\"\n}\n```\n\n**Status Updates Received:**\n- pending → Order received\n- routing → Comparing DEX prices\n- limit_check → Checking if limit price met\n- building → Building transaction\n- submitted → Sent to network\n- confirmed → Success (includes txHash)\n- failed → Error (includes reason)"
+          },
+          "response": []
+        }
+      ],
+      "description": "WebSocket connection information and usage"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Making request to: ' + pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is less than 5000ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test(\"Content-Type is present\", function () {",
+          "    pm.response.to.have.header(\"Content-Type\");",
+          "});"
+        ]
+      }
+    }
+  ]
+}
