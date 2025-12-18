@@ -81,10 +81,10 @@ function connectWebSocket() {
 function updateWSStatus(connected) {
     if (connected) {
         wsStatus.className = 'ws-status ws-connected';
-        wsStatus.innerHTML = '<span>●</span> WebSocket: Connected';
+        wsStatus.innerHTML = 'WebSocket: Connected';
     } else {
         wsStatus.className = 'ws-status ws-disconnected';
-        wsStatus.innerHTML = '<span class="pulse">●</span> WebSocket: Disconnected';
+        wsStatus.innerHTML = 'WebSocket: Disconnected';
     }
 }
 
