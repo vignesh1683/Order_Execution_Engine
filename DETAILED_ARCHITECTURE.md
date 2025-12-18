@@ -2,7 +2,7 @@
 
 This document provides a technical deep-dive into the Order Execution Engine. It complements the high-level `README.md` by explaining *how* the system works internally, focusing on data flow, state management, and algorithm implementation.
 
-## 🏗️ System Architecture
+## System Architecture
 
 The system is built on a **Microservices-lite** architecture within a modular Monolith, separating concerns between API handling, Order Execution, and Queue Management.
 
@@ -10,11 +10,11 @@ The system is built on a **Microservices-lite** architecture within a modular Mo
 
 ```mermaid
 graph TD
-    Client[Client (HTTP/WS)] -->|POST Order| API[Fastify API Layer]
+    Client[Client HTTP/WS] -->|POST Order| API[Fastify API Layer]
     Client <-->|WebSocket| WS[WebSocket Manager]
     
     API -->|Create| DB[(PostgreSQL)]
-    API -->|Enqueue| Queue[BullMQ (Redis)]
+    API -->|Enqueue| Queue[BullMQ Redis]
     
     Queue -->|Process Job| Worker[Order Worker]
     
@@ -31,7 +31,7 @@ graph TD
 
 ---
 
-## 🔄 Order Lifecycle & State Machine
+## Order Lifecycle & State Machine
 
 The core of the engine is the `LimitOrderService`, which acts as a state machine for each order.
 
@@ -76,7 +76,7 @@ stateDiagram-v2
 
 ---
 
-## 💻 Code-Level Deep Dive
+## Code-Level Deep Dive
 
 ### 1. Parallel Quote Fetching (Router)
 Located in `src/dex/MockDexRouter.ts`.
@@ -136,7 +136,7 @@ emit(orderId: string, message: WebSocketMessage) {
 
 ---
 
-## 📊 Data Models
+## Data Models
 
 ### Database (Prisma)
 *   **Order**: The source of truth.
@@ -148,7 +148,7 @@ emit(orderId: string, message: WebSocketMessage) {
 
 ---
 
-## 🛡️ Error Handling Strategy
+## Error Handling Strategy
 
 1.  **Validation**: Zod schemas at API entry point (Bad Request 400).
 2.  **Execution Errors**: Caught in `processLimitOrder` try/catch block.
